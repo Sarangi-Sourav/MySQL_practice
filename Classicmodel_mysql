@@ -1,0 +1,182 @@
+SHOW DATABASES;
+USE classicmodels;
+SHOW TABLES;
+
+SELECT *
+FROM offices;
+
+-- let's fill up the missing values in the state column of the offices table
+UPDATE offices
+SET offices.state = 'NSW'
+WHERE offices.city = 'Sydney';
+
+-- prepare a list of offices sorted by country, state, and city
+SELECT a.officeCode
+FROM offices a
+ORDER BY a.country, a.state, a.city;
+
+SELECT *
+FROM products;
+-- how many employees are there in the company
+SELECT COUNT(e.employeeNUMber)
+FROM employees e; -- 23
+
+-- what is the total of payments recived?
+SELECT SUM(p.amount)
+FROM payments p; -- 8853839.23
+
+-- List the product lines that contain 'Cars'
+SELECT pl.productline
+FROM productlines pl
+WHERE pl.productline LIKE '%Cars'; -- 'Classic Cars','Vinage cars'
+
+-- Report total payments for October 28,2004
+SELECT p.amount
+FROM payments p
+WHERE p.paymentDate = '2004-10-28'; -- 47411.33
+
+-- Report those payments where amount is greater than 100,000
+SELECT *
+FROM payments p
+WHERE p.amount > 100000;
+
+-- List the products in each product line
+SELECT pr.productLine, GROUP_CONCAT(pr.productName)
+FROM products pr
+GROUP BY pr.productLine;
+
+-- How many products in each productline
+SELECT pr.productLine, COUNT(pr.productCode)
+FROM products pr
+GROUP BY pr.productLine;
+
+-- What is the minimum payments recieved?
+SELECT MIN(p.amount)
+FROM payments p; -- 615.45
+
+-- List all payments greater than twice the avg. payment
+SELECT p.amount
+FROM payments p
+WHERE p.amount > (SELECT AVG(p.amount) FROM payments p)*2;
+
+-- What is the average percentage markup of the MSRP on buyPrice?
+SELECT AVG(((pr.MSRP - pr.buyPrice)/pr.buyPrice)*100)
+FROM products pr; -- 88.7023921713
+
+-- How many distinct products does the classic models sales?
+SELECT *
+FROM products;
+
+-- Report the name and city of customers who don't have sales representatives?
+SELECT cs.customerName, cs.city
+FROM customers cs
+WHERE cs.salesRepEmployeeNumber IS NULL;
+
+-- What are the names of executives with VP or Manager in their title? 
+-- Use the CONCAT function to combine the employee's first name and last 
+-- name into a single field for reporting.
+SELECT CONCAT(em.firstName,' ', em.lastName)
+FROM employees em
+WHERE em.jobTitle LIKE 'VP%' OR em.jobTitle LIKE '% Manager%';
+
+-- Which orders have a value greater than $5,000?
+-- ??????????????????????????????????????????????
+USE classicmodels;
+SELECT *
+FROM payments;
+-- Report the account representative for each customer
+SELECT CONCAT(em.firstName,' ',em.lastName) AS Account_representative,GROUP_CONCAT(c.customerName) AS Customer_names
+FROM employees em
+JOIN customers c
+ON em.employeeNumber = c.salesRepEmployeeNumber
+GROUP BY c.salesRepEmployeeNumber;
+
+-- Report the total payments for Atelier graphique
+SELECT SUM(p.amount)
+FROM payments p
+WHERE p.customerNumber = 
+(SELECT c.customerNumber 
+FROM customers c 
+WHERE c.customerName = 'Atelier graphique'); -- 22314.36
+
+-- Report the total payments by date
+SELECT p.paymentDate, SUM(p.amount)
+FROM payments p
+GROUP BY p.paymentDate;
+
+-- Report the product that have not been sold
+SELECT pr.productName
+FROM products pr
+WHERE pr.productCode NOT IN 
+(SELECT DISTINCT(od.productCode) 
+FROM orderdetails od); -- 1985 Toyota Supra
+
+-- List the amount paid by each customer
+SELECT cs.customerName AS Customer_name, SUM(pa.amount) AS Amount_paid
+FROM customers cs
+JOIN payments pa
+ON cs.customerNumber = pa.customerNumber
+GROUP BY Customer_name;
+
+USE classicmodels;
+
+-- How many orders have been placed by 'Herkku Gifts'
+SELECT COUNT(od.orderNumber)
+FROM orders od
+JOIN customers c
+ON od.customerNumber = c.customerNumber
+WHERE c.customerName = 'Herkku Gifts'; -- 3
+
+-- Who are the employees in Boston?
+SELECT CONCAT(em.firstName,' ',em.lastName) AS Employees_name
+FROM employees em
+JOIN offices o
+ON em.officeCode = o.officeCode
+WHERE o.city = 'Boston';
+
+-- Report those payments greater than $100,000.
+-- Sort the report so the customer who made the highest payment appears first.
+SELECT c.customerName, p.amount
+FROM customers c
+JOIN payments p
+ON c.customerNumber = p.customerNumber
+WHERE p.amount > 100000
+ORDER BY p.amount DESC;
+
+-- List the value of 'On Hold' orders.
+SELECT p.amount AS Amount_on_hold
+FROM payments p
+JOIN orders o
+ON p.customerNumber = o.customerNumber
+WHERE o.status = 'On Hold';
+
+-- Report the number of orders 'On Hold' for each customer.
+SELECT c.customerName, COUNT(o.orderNumber) AS Number_of_orders 
+FROM customers c
+JOIN orders o
+ON c.customerNumber = o.customerNumber
+WHERE o.status = 'On Hold'
+GROUP BY c.customerName;
+
+-- List products sold by order date.
+SELECT DISTINCT(p.productName) AS Product_name, o.orderDate
+FROM (orders o JOIN orderdetails od ON o.orderNumber = od.orderNumber)
+JOIN products p
+ON p.productCode = od.productCode
+GROUP BY o.orderDate;
+
+-- List the order dates in descending order for orders for the 1940 Ford Pickup Truck.
+SELECT o.orderDate 
+FROM (orders o JOIN orderdetails od ON o.orderNumber = od.orderNumber)
+JOIN products p
+ON p.productCode = od.productCode
+WHERE p.productName = '1940 Ford Pickup Truck' 
+ORDER BY o.orderDate DESC;
+
+-- List the names of customers and their corresponding order number 
+-- where a particular order from that customer has a value greater than $25,000?
+SELECT DISTINCT c.customerName, o.orderNumber
+FROM (customers c JOIN orders o ON c.customerNumber = o.customerNumber)
+JOIN payments p
+ON c.customerNumber = p.customerNumber
+WHERE p.amount > 25000;
